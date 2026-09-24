@@ -1,0 +1,20 @@
+# BUG-002 — request:
+$ curl -s -w "[%{http_code}]" -X POST http://localhost:8080/api/auth/signin -H "Content-Type: application/json" -d '{"username":"qa_user"}'
+# response:
+[http_code=000] curl exit code: 52 (52 = empty reply from server)
+
+# docker inspect RestartCount before: 12, after: 13
+# API container log around the crash:
+/app/node_modules/bcryptjs/dist/bcrypt.js:265
+            throw Error("Illegal arguments: "+(typeof s)+', '+(typeof hash));
+                  ^
+
+Error: Illegal arguments: undefined, string
+    at bcrypt.compareSync (/app/node_modules/bcryptjs/dist/bcrypt.js:265:19)
+    at /app/app/controllers/auth.controller.js:79:36
+    at /app/node_modules/mongoose/lib/model.js:5082:18
+    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)
+
+Node.js v18.20.8
+Server is running on port 8080.
+Successfully connect to MongoDB.

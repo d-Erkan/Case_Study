@@ -1,0 +1,35 @@
+# BUG-003 — setup: moderator 'temp_mod' signs up and signs in, then the account is deleted (admin action simulated in DB):
+$ docker exec jwt-rbac-qa-mongo-1 mongosh bezkoder_db --eval 'db.users.deleteOne({username:"temp_mod"})'
+{
+  acknowledged: true,
+  deletedCount: 1
+}
+
+# (a) read endpoint (verifyToken only) still serves data to the deleted account:
+$ curl -H 'x-access-token: <deleted user token>' localhost:8080/api/tutorials/published
+< HTTP 200
+
+# (b) refresh token of the deleted account still mints new access tokens:
+$ curl -X POST localhost:8080/api/auth/refreshtoken -d '{"refreshToken":"<deleted user refresh token>"}'
+{"accessToken":"eyJ...(valid JWT)","refreshToken":"51495caf-cb93-4fa5-813e-d8e494086612"} < HTTP 200
+
+# (c) any RBAC-guarded endpoint crashes the whole API process:
+$ curl -X POST -H 'x-access-token: <deleted user token>' localhost:8080/api/tutorials -d '{"title":"x"}'
+< HTTP 000  curl exit code: 52 (52 = empty reply from server)
+
+# docker inspect RestartCount before: 13, after: 14
+# API container log:
+node:events:495
+      throw er; // Unhandled 'error' event
+      ^
+
+TypeError: Cannot read properties of null (reading 'roles')
+    at /app/app/middlewares/authJwt.js:104:26
+    at /app/node_modules/mongoose/lib/model.js:5082:18
+    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)
+Emitted 'error' event on Function instance at:
+    at /app/node_modules/mongoose/lib/model.js:5084:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)
+
+Node.js v18.20.8
+Server is running on port 8080.

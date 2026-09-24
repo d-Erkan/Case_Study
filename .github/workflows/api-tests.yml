@@ -1,0 +1,46 @@
+name: API tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install test dependencies
+        run: npm ci
+
+      - name: Start system under test (Docker Compose)
+        run: npm run env:up
+
+      - name: Test Setup Script (baseline + tokens)
+        run: npm run test:setup
+
+      - name: Integration + E2E tests (known bugs in xfail mode)
+        run: npx jest --ci --json --outputFile=reports/jest-results.json
+
+      - name: API logs
+        if: failure()
+        run: npm run env:logs
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+          if-no-files-found: ignore
+
+      - name: Tear down
+        if: always()
+        run: npm run env:down

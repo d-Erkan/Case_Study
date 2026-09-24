@@ -1,0 +1,40 @@
+
+# 1. Sign in as the seeded moderator (qa_moderator)
+accessToken: eyJhbGciOiJIUzI1NiIs...
+
+# 2. Create a tutorial
+> POST /api/tutorials {"title":"Original title","description":"Original description","published":false}
+< {"title":"Original title","description":"Original description","published":false,"createdAt":"2026-09-24T14:45:34.788Z","updatedAt":"2026-09-24T14:45:34.788Z","id":"6ab5378ebb274b70d4134e12"}
+
+# 3. Update it
+> PUT /api/tutorials/6ab5378ebb274b70d4134e12 {"title":"Updated title","description":"Updated description","published":true}
+< HTTP/1.1 200 OK
+< X-Powered-By: Express
+< Access-Control-Allow-Origin: http://localhost:8081
+< Vary: Origin
+< Access-Control-Allow-Headers: x-access-token, Origin, Content-Type, Accept
+< Content-Type: application/json; charset=utf-8
+< Content-Length: 48
+< ETag: W/"30-eLrskyV5K+qpOebje/ICJS9bwCQ"
+< Date: Thu, 24 Sep 2026 14:45:34 GMT
+< Connection: keep-alive
+< Keep-Alive: timeout=5
+< 
+< {"message":"Tutorial was updated successfully."}
+
+# 4. Read it back through the API
+> GET /api/tutorials/6ab5378ebb274b70d4134e12
+< {"title":"Original title","description":"Original description","published":false,"createdAt":"2026-09-24T14:45:34.788Z","updatedAt":"2026-09-24T14:45:34.788Z","id":"6ab5378ebb274b70d4134e12"}
+
+# 5. Read it straight from MongoDB
+{
+  _id: ObjectId('6ab5378ebb274b70d4134e12'),
+  title: 'Original title',
+  description: 'Original description',
+  published: false,
+  createdAt: ISODate('2026-09-24T14:45:34.788Z'),
+  updatedAt: ISODate('2026-09-24T14:45:34.788Z'),
+  __v: 0
+}
+
+# Result: the API answered 200 'Tutorial was updated successfully.' but title/description/published/updatedAt are unchanged.

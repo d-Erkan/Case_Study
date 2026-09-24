@@ -1,0 +1,18 @@
+# MongoDB profiler (level 2) during: PUT /api/tutorials/66b000000000000000000004 {"title":"Updated title","published":true}
+# Response: 200 {"message":"Tutorial was updated successfully."}
+# Every operation recorded on bezkoder_db.tutorials for that request (session metadata trimmed):
+
+{
+  op: 'query',
+  command: {
+    find: 'tutorials',
+    filter: {
+      _id: ObjectId('66b000000000000000000004')
+    },
+    limit: 1
+  },
+  docsExamined: 1,
+  nreturned: 1
+}
+
+# => Only a find (limit 1) is issued. No update/findAndModify command reaches MongoDB.

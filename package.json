@@ -1,0 +1,32 @@
+{
+  "name": "jwt-rbac-api-test-suite",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Automated integration & end-to-end test suite for the JWT + RBAC Tutorials REST API (Node.js / Express / MongoDB)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "env:up": "node scripts/env.js up",
+    "env:down": "node scripts/env.js down",
+    "env:reset": "node scripts/env.js reset",
+    "env:status": "node scripts/env.js status",
+    "env:logs": "node scripts/env.js logs",
+    "test:setup": "node scripts/test-setup.js",
+    "test": "jest",
+    "test:integration": "jest --selectProjects integration",
+    "test:e2e": "jest --selectProjects e2e",
+    "test:strict": "cross-env KNOWN_BUGS=strict jest",
+    "test:safe": "cross-env SKIP_DESTRUCTIVE=1 jest",
+    "ci": "npm run env:up && npm test"
+  },
+  "devDependencies": {
+    "@jest/test-sequencer": "^30.5.2",
+    "bcryptjs": "^2.4.3",
+    "cross-env": "^7.0.3",
+    "jest": "^30.5.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^6.21.0"
+  }
+}

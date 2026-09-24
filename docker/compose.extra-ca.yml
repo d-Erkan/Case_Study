@@ -1,0 +1,12 @@
+# OPTIONAL override, applied by scripts/env.js only when EXTRA_CA_CERT is set.
+#
+# Why: behind a TLS-intercepting (corporate) proxy, `npm install` inside the SUT's
+# image build fails with SELF_SIGNED_CERT_IN_CHAIN. This override builds the *same*
+# application code with an alternative Dockerfile that trusts the extra CA.
+# The SUT's source and its own Dockerfile remain untouched.
+services:
+  app:
+    build:
+      dockerfile: ${QA_ROOT}/docker/app-extra-ca.Dockerfile
+      additional_contexts:
+        certs: ${QA_ROOT}/.sut/certs

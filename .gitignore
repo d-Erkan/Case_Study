@@ -1,0 +1,7 @@
+node_modules/
+# System under test is cloned here by `npm run env:up` (never committed)
+.sut/
+# Runtime artefacts written by the setup script / test runs
+.state/
+reports/
+.env
