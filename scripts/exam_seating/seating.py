@@ -16,7 +16,7 @@ Usage:
 
 Output (in `directory`):
     seatings.txt   - one line per student: id, room (sorted by id)
-    seatings.pdf   - same list as a printable pdf to share with students
+    seatings.pdf   - seatings.txt as a pdf
                      (needs reportlab)
     <ROOM>.html    - printable seating plan per room (board at the top)
 
@@ -177,56 +177,29 @@ with open(os.path.join(directory, 'seatings.txt'), 'w', encoding='utf-8') as sea
     for sid in sorted(students):
         seatings.write(sid + ' ' + str(students[sid][1]).ljust(6) + '\n')
 
-# write student exam rooms as a pdf to share with students (ids only)
+# same seatings.txt content as a pdf, one line per student
 try:
-    from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib.units import cm
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.pdfgen import canvas
 except ImportError:
     print('reportlab not installed (pip install reportlab), seatings.pdf skipped')
 else:
-    styles = getSampleStyleSheet()
-    entries = [(sid, room_names[students[sid][1]]) for sid in sorted(students)]
-    groups = 3                                   # side by side (ID, Room) column pairs
-    per_col = int(math.ceil(len(entries) / float(groups)))
-    data = [['Student ID', 'Room'] * groups]
-    for i in range(per_col):
-        line = []
-        for g in range(groups):
-            k = g * per_col + i
-            line += list(entries[k]) if k < len(entries) else ['', '']
-        data.append(line)
-    table = Table(data, repeatRows=1,
-                  colWidths=[2.6 * cm, 3.4 * cm] * groups)
-    style = [
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('LEADING', (0, 0), (-1, -1), 10),
-        ('TOPPADDING', (0, 0), (-1, -1), 1),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-        ('LINEBELOW', (0, 0), (-1, 0), 0.8, colors.black),
-        ('BOX', (0, 0), (-1, -1), 0.8, colors.black),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#eeeeee')]),
-    ]
-    for g in range(1, groups):
-        style.append(('LINEBEFORE', (2 * g, 0), (2 * g, -1), 0.8, colors.black))
-    table.setStyle(TableStyle(style))
-    doc = SimpleDocTemplate(os.path.join(directory, 'seatings.pdf'), pagesize=A4,
-                            title=title, topMargin=1.2 * cm, bottomMargin=1.2 * cm,
-                            leftMargin=1.5 * cm, rightMargin=1.5 * cm)
-    doc.build([
-        Paragraph(html.escape(course_name), styles['Title']),
-        Paragraph(html.escape(exam_name) + ' - Seating', styles['Heading2']),
-        Paragraph('<i>' + html.escape(date) + '</i>', styles['Normal']),
-        Spacer(1, 0.2 * cm),
-        Paragraph('Find your student ID to see your exam room. '
-                  'Your exact seat is shown on the seating plan posted on the room door.',
-                  styles['Normal']),
-        Spacer(1, 0.3 * cm),
-        table,
-    ])
+    with open(os.path.join(directory, 'seatings.txt'), encoding='utf-8') as f:
+        lines = f.read().splitlines()
+    page_w, page_h = A4
+    margin, font_size, leading = 56, 10, 13
+    pdf = canvas.Canvas(os.path.join(directory, 'seatings.pdf'), pagesize=A4)
+    pdf.setTitle(title)
+    y = page_h - margin
+    pdf.setFont('Courier', font_size)
+    for line in lines:
+        if y < margin:
+            pdf.showPage()
+            pdf.setFont('Courier', font_size)
+            y = page_h - margin
+        pdf.drawString(margin, y, line)
+        y -= leading
+    pdf.save()
 
 # print seating plans
 for room in exam_rooms:
