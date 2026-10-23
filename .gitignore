@@ -9,4 +9,4 @@ reports/
 # Exam seating: student data and generated plans (never committed)
 scripts/exam_seating/*.csv
 scripts/exam_seating/*.txt
-scripts/exam_seating/seating_output/
+scripts/exam_seating/seating/

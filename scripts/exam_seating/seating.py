@@ -15,7 +15,7 @@ Usage:
     python3 seating.py
 
 Output (in `directory`):
-    seatings.txt   - one line per student: id, room, row, seat (sorted by id)
+    seatings.txt   - one line per student: id, room (sorted by id)
     <ROOM>.html    - printable seating plan per room (board at the top)
 
 @author: burakkerim
@@ -23,7 +23,7 @@ Output (in `directory`):
 
 import csv, html, math, os, random, shutil
 
-directory = 'seating_output/'
+directory = 'seating/'
 title = 'CENG111 EXAM'
 exam_name = 'Exam'
 course_name = 'CENG 111'
@@ -153,19 +153,10 @@ assert number_of_students_in_rooms == len(students), \
 shutil.rmtree(directory, ignore_errors=True)
 os.makedirs(directory)
 
-# seat position of each student: id -> (row, seat), 1-based, row 1 = board
-positions = {}
-for room in exam_rooms:
-    cols = rooms[room][1]
-    for k, sid in enumerate(rooms[room][2]):
-        positions[sid] = (k // cols + 1, k % cols + 1)
-
 # write student exam rooms
 with open(os.path.join(directory, 'seatings.txt'), 'w', encoding='utf-8') as seatings:
     for sid in sorted(students):
-        r, s = positions[sid]
-        seatings.write('%s %s row %d seat %d\n'
-                       % (sid, students[sid][1].ljust(6), r, s))
+        seatings.write(sid + ' ' + str(students[sid][1]).ljust(6) + '\n')
 
 # print seating plans
 for room in exam_rooms:
@@ -200,7 +191,6 @@ for room in exam_rooms:
         <h6 align="center"><i>' + html.escape(date) + '</i></h6>\n\
         <h3 align="center"> ' + html.escape(room_names[room]) + '</h3>\n\
         <h4 align="center"><b> BOARD </b></h4>\n\
-        </th>\n\
         </tr>\n\n')
 
     for i in range(n_rows):
