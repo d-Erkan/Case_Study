@@ -24,17 +24,17 @@ Output (in `directory`):
 import csv, html, math, os, random, shutil
 
 directory = 'seating_output/'
-title = 'CENG403 FINAL'
-exam_name = 'FINAL Exam'
-course_name = 'CENG 403 - Introduction to Deep Learning'
-date = '12 June 2026 - 13.30-15.30'
+title = 'CENG111 EXAM'
+exam_name = 'Exam'
+course_name = 'CENG 111'
+date = 'DATE / TIME TBD'
 
 # student list exported from the course page (Excel -> "CSV UTF-8"),
 # one header line, then one student per line
-student_list = 'courseid_3146_participants_final.csv'
+student_list = 'courseid_5129_participants.csv'
 delimiter = ','          # use '\t' for a tab separated copy of the excel file
-col_last_name = 0        # column indices (0-based) in the csv
-col_first_name = 1
+col_first_name = 0       # column indices (0-based) in the csv
+col_last_name = 1
 col_id = 2
 
 # optional: file with ids of students allowed - one id per line -
@@ -42,7 +42,7 @@ col_id = 2
 check_list = None        # e.g. 'final_list.txt'
 
 # set to an int (e.g. 403) to get the same plan on every run
-random_seed = None
+random_seed = 5129
 
 # rooms used for this exam (order = fill order)
 exam_rooms = [
