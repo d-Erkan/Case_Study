@@ -44,6 +44,14 @@ check_list = None        # e.g. 'final_list.txt'
 # set to an int (e.g. 403) to get the same plan on every run
 random_seed = 5129
 
+# after random filling, move the last N seated students of a room
+# to the end of another room: (from_room, to_room, N)
+moves = [
+    ('BMB4', 'BMB5', 2),
+    ('BMB2', 'BMB5', 1),
+    ('BMB3', 'BMB5', 1),
+]
+
 # rooms used for this exam (order = fill order)
 exam_rooms = [
     'BMB1-1',
@@ -137,6 +145,15 @@ for room in exam_rooms:
         students[sid] = (students[sid][0], room)
         if len(rooms[room][2]) >= quota:
             break
+
+# manual adjustments
+for src, dst, n in moves:
+    for sid in rooms[src][2][-n:]:
+        rooms[src][2].remove(sid)
+        rooms[dst][2].append(sid)
+        students[sid] = (students[sid][0], dst)
+        assert len(rooms[dst][2]) <= rooms[dst][0] * rooms[dst][1], \
+            'Not enough seats in %s' % dst
 
 # check rooms
 number_of_students_in_rooms = 0
